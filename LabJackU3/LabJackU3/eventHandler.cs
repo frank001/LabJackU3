@@ -8,9 +8,12 @@ using LabJack.LabJackUD;
 
 namespace LabJackU3 {
 
+    public enum LogLevel { RAW, DEBUG, INFO, ERROR, NONE };
     public class LogEventArgs : EventArgs {
+        public LogLevel logLevel { get; private set; }
         public string Message { get; private set; }
-        public LogEventArgs(string message) {
+        public LogEventArgs(LogLevel loglevel, string message) {
+            logLevel = loglevel;
             Message = message;
         }
     }
@@ -31,10 +34,12 @@ namespace LabJackU3 {
         public event LogEventCallback onMessage;
         public event DataReadyCallback onDataReady;
         public event LJU3RequestCallback onLJU3Request;
+        public LogLevel loglevel = LogLevel.ERROR;
 
         public eventHandler() { }
 
         public void LogMessage(object sender, LogEventArgs args) {
+            if (args.logLevel < loglevel) return;
             Console.WriteLine(sender.ToString() + ": " + args.Message);
             if (onMessage == null) return;
             onMessage(sender, args);

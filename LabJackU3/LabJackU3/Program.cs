@@ -10,17 +10,19 @@ namespace LabJackU3 {
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
-        public static eventHandler evtHandler;
+        public static eventHandler evth;
         [STAThread]
         static void Main() {
-            evtHandler = new eventHandler();
+            evth = new eventHandler();
+            evth.LogMessage(evth, new LogEventArgs(LogLevel.DEBUG, "Program start."));
             MainForm mainForm = new MainForm();
             Thread mainThread = new Thread(new ThreadStart(mainForm.Main));
             mainThread.Start();
             while (!mainThread.IsAlive) ;
+            evth.LogMessage(evth, new LogEventArgs(LogLevel.DEBUG, "Main thread running."));
             Thread.Sleep(100);
 
-            LJU3Control lju3Control = new LJU3Control(evtHandler);
+            LJU3Control lju3Control = new LJU3Control(evth);
             Thread lju3Thread = new Thread(new ThreadStart(lju3Control.Main));
             lju3Thread.Start();
 
@@ -29,9 +31,11 @@ namespace LabJackU3 {
                 Thread.Sleep(10);
             }
             mainThread.Join();
+            evth.LogMessage(evth, new LogEventArgs(LogLevel.DEBUG, "Main thread terminated."));
             lju3Thread.Abort();
             while (lju3Thread.IsAlive) ;
             lju3Thread.Join();
+            evth.LogMessage(evth, new LogEventArgs(LogLevel.DEBUG, "Program exit normally."));
 
         }
 
@@ -39,7 +43,7 @@ namespace LabJackU3 {
             public void Main() {
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
-                Application.Run(new frmMain(evtHandler));
+                Application.Run(new frmMain(evth));
             }
         }
 

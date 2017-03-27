@@ -47,37 +47,35 @@ namespace LabJackU3 {
             Execute(request.Command, request.Args);
         }
 
-        ~LJU3Control() { evth.LogMessage(this, new LogEventArgs("LabJackU3 thread aborted")); }
+        ~LJU3Control() { evth.LogMessage(this, new LogEventArgs(LogLevel.DEBUG, "Thread aborted.")); }
 
-        // If error occured print a message indicating which one occurred. If the error is a group error (communication/fatal), quit
         public void ShowErrorMessage(LabJackUDException e) {
-            Console.Out.WriteLine("Error: " + e.ToString());
+            //Called when an error occurred. When the error is a group error (communication/fatal), abort.
+            evth.LogMessage(this, new LogEventArgs(LogLevel.ERROR, e.ToString()));
             if (e.LJUDError > U3.LJUDERROR.MIN_GROUP_ERROR) {
-                //TODO: Test this!
-                Environment.Exit(-1);
+                Environment.Exit(-1);                                   //TODO: Test this! or just abort the thread.
             }
         }
 
         private void Initialize() {
-            double driverVersion;
-            evth.LogMessage(this, new LogEventArgs("Initializing LabJack U3"));
-            driverVersion = LJUD.GetDriverVersion();
-            evth.LogMessage(this, new LogEventArgs("UD Driver Version: " + driverVersion.ToString()));
+            double value=0;
+            evth.LogMessage(this, new LogEventArgs(LogLevel.INFO, "Initializing."));
+            
 
             try {  //Open the first found LabJack U3 through USB.
                 u3 = new U3(LJUD.CONNECTION.USB, "0", true);
                 isValid = true;
-            }
-            catch (Exception ex) {
-                evth.LogMessage(this, new LogEventArgs("LJU3Control_Initialize exception: " + ex.Message));
+            } catch (Exception ex) {
+                evth.LogMessage(this, new LogEventArgs(LogLevel.ERROR, "Initialize exception: " + ex.Message));
                 return;
             }
-            double value = 0;
+            value = LJUD.GetDriverVersion();
+            evth.LogMessage(this, new LogEventArgs(LogLevel.INFO, "UD Driver Version: " + value.ToString()));
             LJUD.eGet(u3.ljhandle, LJUD.IO.GET_CONFIG, LJUD.CHANNEL.HARDWARE_VERSION, ref value, 0);
-            evth.LogMessage(this, new LogEventArgs("U3 HARDWARE_VERSION: " + value));
+            evth.LogMessage(this, new LogEventArgs(LogLevel.INFO, "Hardware Version: " + value));
             LJUD.eGet(u3.ljhandle, LJUD.IO.GET_CONFIG, LJUD.CHANNEL.FIRMWARE_VERSION, ref value, 0);
-            evth.LogMessage(this, new LogEventArgs("U3 FIRMWARE_VERSION: " + value));
-            evth.LogMessage(this, new LogEventArgs("LabJack U3 initialized"));
+            evth.LogMessage(this, new LogEventArgs(LogLevel.INFO, "Firmware Version: " + value));
+            evth.LogMessage(this, new LogEventArgs(LogLevel.INFO, "Initialized."));
 
             Execute(LJU3Commands.PIN_CONFIGURATION_RESET, new object[] { });            //pin assignments in factory default condition.
             Execute(LJU3Commands.PUT_ANALOG_ENABLE_PORT, new object[] { 0, 0, 16 });    //all assignments digital input.
@@ -87,14 +85,14 @@ namespace LabJackU3 {
 
         public void Execute(LJU3Commands command, object[] args) {
             if (!isValid) {
-                evth.LogMessage(this, new LogEventArgs("LabJack U3 not initialized, aborting"));
+                evth.LogMessage(this, new LogEventArgs(LogLevel.ERROR, "Not initialized, aborting."));
                 return;
             }
             cmdQueue.Enqueue(new LJU3Command(command, args));
         }
 
         private void HandleCommand(LJU3Commands command, object[] args) {
-            bool logEnable = true;
+            LogLevel loglevel = LogLevel.INFO;
             switch (command) {
                 case LJU3Commands.GET_CONFIG:
                     double value = 0;
@@ -108,11 +106,10 @@ namespace LabJackU3 {
                     break;
                 case LJU3Commands.GET_DIGITAL_BIT:
                     LJUD.AddRequest(u3.ljhandle, LJUD.IO.GET_DIGITAL_BIT, (LJUD.CHANNEL)args[0], Convert.ToDouble(args[1]), (int)args[2], Convert.ToDouble(args[3]));
-                    logEnable = false;
+                    loglevel = LogLevel.RAW;
                     break;
-
             }
-            if (logEnable) evth.LogMessage(this, new LogEventArgs("LabJack U3 command executed: " + command.ToString()));
+            evth.LogMessage(this, new LogEventArgs(loglevel, "Command executed: " + command.ToString()));
         }
 
         private void DeQueue() {
@@ -128,13 +125,13 @@ namespace LabJackU3 {
             switch (ioType) {
                 case LJUD.IO.GET_DIGITAL_BIT:
                     object[] data = new object[] { (int)channel, Convert.ToBoolean(value) };
+                    evth.LogMessage(this, new LogEventArgs(LogLevel.RAW, "Result handled: " + ioType.ToString()));
                     evth.DataReady(this, new DataReadyEventArgs(LJU3Commands.GET_DIGITAL_BIT, data));
-
                     break;
                 case LJUD.IO.GET_CONFIG:
                     break;
                 default:
-                    evth.LogMessage(this, new LogEventArgs(channel.ToString() + " Unhandled Result"));
+                    evth.LogMessage(this, new LogEventArgs(LogLevel.ERROR, channel.ToString() + " Unhandled Result"));
                     break;
             }
         }
@@ -149,21 +146,18 @@ namespace LabJackU3 {
             bool finished = false;
             try {
                 LJUD.GetFirstResult(u3.ljhandle, ref ioType, ref channel, ref dblValue, ref dummyInt, ref dummyDouble);
-            }
-            catch (LabJackUDException e) {
+            } catch (LabJackUDException e) {
                 ShowErrorMessage(e);
             }
             while (!finished) {
                 HandleResult(ioType, channel, dblValue);
                 try {
                     LJUD.GetNextResult(u3.ljhandle, ref ioType, ref channel, ref dblValue, ref dummyInt, ref dummyDouble);
-                }
-                catch (LabJackUDException e) {
+                } catch (LabJackUDException e) {
                     // If we get an error, report it.  If the error is NO_MORE_DATA_AVAILABLE we are done
                     if (e.LJUDError == U3.LJUDERROR.NO_MORE_DATA_AVAILABLE) {
                         finished = true;
-                    }
-                    else ShowErrorMessage(e);
+                    } else ShowErrorMessage(e);
                 }
             }
         }

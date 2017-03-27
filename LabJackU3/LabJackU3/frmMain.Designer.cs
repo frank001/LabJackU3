@@ -33,6 +33,7 @@
             this.lbConsole = new System.Windows.Forms.ListBox();
             this.btnChan0 = new System.Windows.Forms.Button();
             this.btnChan1 = new System.Windows.Forms.Button();
+            this.cbDebugLevel = new System.Windows.Forms.ComboBox();
             this.SuspendLayout();
             // 
             // button1
@@ -50,16 +51,15 @@
             this.lblStatus.AutoSize = true;
             this.lblStatus.Location = new System.Drawing.Point(14, 232);
             this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Size = new System.Drawing.Size(69, 13);
+            this.lblStatus.Size = new System.Drawing.Size(0, 13);
             this.lblStatus.TabIndex = 1;
-            this.lblStatus.Text = "Program start";
             // 
             // lbConsole
             // 
             this.lbConsole.FormattingEnabled = true;
             this.lbConsole.Location = new System.Drawing.Point(12, 42);
             this.lbConsole.Name = "lbConsole";
-            this.lbConsole.Size = new System.Drawing.Size(250, 186);
+            this.lbConsole.Size = new System.Drawing.Size(418, 186);
             this.lbConsole.TabIndex = 2;
             // 
             // btnChan0
@@ -84,11 +84,21 @@
             this.btnChan1.Text = "-";
             this.btnChan1.UseVisualStyleBackColor = false;
             // 
+            // cbDebugLevel
+            // 
+            this.cbDebugLevel.FormattingEnabled = true;
+            this.cbDebugLevel.Location = new System.Drawing.Point(649, 13);
+            this.cbDebugLevel.Name = "cbDebugLevel";
+            this.cbDebugLevel.Size = new System.Drawing.Size(121, 21);
+            this.cbDebugLevel.TabIndex = 5;
+            this.cbDebugLevel.SelectedIndexChanged += new System.EventHandler(this.cbDebugLevel_SelectedIndexChanged);
+            // 
             // frmMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(776, 261);
+            this.Controls.Add(this.cbDebugLevel);
             this.Controls.Add(this.btnChan1);
             this.Controls.Add(this.btnChan0);
             this.Controls.Add(this.lbConsole);
@@ -108,6 +118,7 @@
         private System.Windows.Forms.ListBox lbConsole;
         private System.Windows.Forms.Button btnChan0;
         private System.Windows.Forms.Button btnChan1;
+        private System.Windows.Forms.ComboBox cbDebugLevel;
     }
 }
 
