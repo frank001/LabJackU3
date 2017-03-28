@@ -10,7 +10,7 @@ using LabJack.LabJackUD;
 namespace LabJackU3 {
 
     public enum LJU3Commands {
-        GET_CONFIG, PIN_CONFIGURATION_RESET, PUT_ANALOG_ENABLE_PORT, GET_DIGITAL_BIT
+        GET_CONFIG, PIN_CONFIGURATION_RESET, PUT_ANALOG_ENABLE_PORT, GET_DIGITAL_BIT, PUT_DIGITAL_BIT
     }
 
     public class DataReadyEventArgs : EventArgs {
@@ -108,6 +108,12 @@ namespace LabJackU3 {
                     LJUD.AddRequest(u3.ljhandle, LJUD.IO.GET_DIGITAL_BIT, (LJUD.CHANNEL)args[0], Convert.ToDouble(args[1]), (int)args[2], Convert.ToDouble(args[3]));
                     loglevel = LogLevel.RAW;
                     break;
+                case LJU3Commands.PUT_DIGITAL_BIT:
+                    LJUD.AddRequest(u3.ljhandle, LJUD.IO.PUT_DIGITAL_BIT, (LJUD.CHANNEL)args[0], Convert.ToDouble(args[1]), 0, 0);
+                    break;
+                default:
+                    throw (new Exception("Unhandled command."));
+                    //break;
             }
             evth.LogMessage(this, new LogEventArgs(loglevel, "Command executed: " + command.ToString()));
         }
