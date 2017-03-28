@@ -112,8 +112,8 @@ namespace LabJackU3 {
                     LJUD.AddRequest(u3.ljhandle, LJUD.IO.PUT_DIGITAL_BIT, (LJUD.CHANNEL)args[0], Convert.ToDouble(args[1]), 0, 0);
                     break;
                 default:
-                    throw (new Exception("Unhandled command."));
-                    //break;
+                    evth.LogMessage(this, new LogEventArgs(LogLevel.ERROR, command.ToString() + ": Unhandled Command."));
+                    break;
             }
             evth.LogMessage(this, new LogEventArgs(loglevel, "Command executed: " + command.ToString()));
         }
@@ -135,9 +135,13 @@ namespace LabJackU3 {
                     evth.DataReady(this, new DataReadyEventArgs(LJU3Commands.GET_DIGITAL_BIT, data));
                     break;
                 case LJUD.IO.GET_CONFIG:
+                    evth.LogMessage(this, new LogEventArgs(LogLevel.ERROR, ioType.ToString() + ": Not Implemented."));
+                    break;
+                case LJUD.IO.PUT_DIGITAL_BIT:
+                    evth.LogMessage(this, new LogEventArgs(LogLevel.ERROR, ioType.ToString() + ": Not Implemented (TODO)."));
                     break;
                 default:
-                    evth.LogMessage(this, new LogEventArgs(LogLevel.ERROR, channel.ToString() + " Unhandled Result"));
+                    evth.LogMessage(this, new LogEventArgs(LogLevel.ERROR, ioType.ToString() + ": Unhandled Result"));
                     break;
             }
         }

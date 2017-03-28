@@ -92,8 +92,8 @@ namespace LabJackU3 {
             evth.LJU3Request(LJU3Commands.PUT_ANALOG_ENABLE_PORT, new object[] { 0, 0, 16 });
         }
 
-        private void cbDebugLevel_SelectedIndexChanged(object sender, EventArgs e) {
-
+        private void button2_Click(object sender, EventArgs e) {
+            evth.LJU3Request(LJU3Commands.PUT_DIGITAL_BIT, new object[] { 2, 1 });
         }
     }
 }
