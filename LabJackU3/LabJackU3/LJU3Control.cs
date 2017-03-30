@@ -36,11 +36,13 @@ namespace LabJackU3 {
         private U3 u3;
         private bool isValid = false;
         private Queue<LJU3Command> cmdQueue = new Queue<LJU3Command>();
+        private bool[] DigitalIO = new bool[16];
 
 
         public LJU3Control(eventHandler eh) {
             evth = eh;
             evth.onLJU3Request += Evth_onLJU3Request;
+            for (byte i = 0; i < DigitalIO.Length; i++) DigitalIO[i] = true;
         }
 
         private void Evth_onLJU3Request(object sender, LJU3RequestArgs request) {
@@ -130,9 +132,18 @@ namespace LabJackU3 {
 
             switch (ioType) {
                 case LJUD.IO.GET_DIGITAL_BIT:
-                    object[] data = new object[] { (int)channel, Convert.ToBoolean(value) };
+                    int ch = (int)channel;
+                    bool val = Convert.ToBoolean(value);
+                    if (DigitalIO[ch] != val) {
+                        DigitalIO[ch] = val;
+                        object[] data = new object[] { ch, val };
+                        evth.DigitalIOChanged(this, new DigitalIOChangedArgs(ch, val));
+                        evth.LogMessage(this, new LogEventArgs(LogLevel.DEBUG, "Digital Channel " + ch.ToString() + " changed: " + value.ToString()));
+                        //fire event.
+
+                        //evth.DataReady(this, new DataReadyEventArgs(LJU3Commands.GET_DIGITAL_BIT, data));
+                    }
                     evth.LogMessage(this, new LogEventArgs(LogLevel.RAW, "Result handled: " + ioType.ToString()));
-                    evth.DataReady(this, new DataReadyEventArgs(LJU3Commands.GET_DIGITAL_BIT, data));
                     break;
                 case LJUD.IO.GET_CONFIG:
                     evth.LogMessage(this, new LogEventArgs(LogLevel.ERROR, ioType.ToString() + ": Not Implemented."));
@@ -178,10 +189,17 @@ namespace LabJackU3 {
 
 
             while (isValid) {
-                Execute(LJU3Commands.GET_DIGITAL_BIT, new object[] { 0, 0, 0, 0 });
-                Execute(LJU3Commands.GET_DIGITAL_BIT, new object[] { 1, 0, 0, 0 });
+                for (byte i = 0; i < 16; i++) {
+                    Execute(LJU3Commands.GET_DIGITAL_BIT, new object[] { (int)i, 0, 0, 0 });
+                }
                 DeQueue();
-                LJUD.GoOne(u3.ljhandle);
+                try {
+                    LJUD.GoOne(u3.ljhandle);
+                } catch (LabJackUDException e) {
+                    evth.LogMessage(this, new LogEventArgs(LogLevel.ERROR, e.Message));
+                    isValid = false;
+                    return;
+                }
                 Thread.Sleep(10);
                 GetResults();
 

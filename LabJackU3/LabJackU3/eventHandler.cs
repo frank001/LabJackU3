@@ -29,12 +29,15 @@ namespace LabJackU3 {
     }
     public delegate void LJU3RequestCallback(object sender, LJU3RequestArgs args);
 
+    
 
     public class eventHandler {
         public event LogEventCallback onMessage;
         public event DataReadyCallback onDataReady;
         public event LJU3RequestCallback onLJU3Request;
-        public LogLevel loglevel = LogLevel.ERROR;
+        public event DigitalIOChangedCallback onDigitalIOChange;
+
+        public LogLevel loglevel = LogLevel.DEBUG;
 
         public eventHandler() { }
 
@@ -55,5 +58,9 @@ namespace LabJackU3 {
             onLJU3Request(this, new LJU3RequestArgs(lju3Command, param));
         }
 
+        public void DigitalIOChanged(object sender, DigitalIOChangedArgs args) {
+            if (onDigitalIOChange == null) return;
+            onDigitalIOChange(sender, args);
+        }
     }
 }

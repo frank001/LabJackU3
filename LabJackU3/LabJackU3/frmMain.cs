@@ -33,7 +33,6 @@ namespace LabJackU3 {
             InitializeComponent();
 
             evth.onMessage += evth_onMessage;
-            evth.onDataReady += evth_onDataReady;
 
             //Populate combobox DebugLevel with LogLevel enumeration.
             uint[] logLevelValues = (uint[])Enum.GetValues(typeof(LogLevel));
@@ -51,7 +50,17 @@ namespace LabJackU3 {
             }
             //add eventhandler for when the user changes the log level.
             cbDebugLevel.SelectedIndexChanged += CbDebugLevel_SelectedIndexChanged;
-            
+
+            //eventhandler for digital io
+            for (byte i=0;i<gbDigitalIO.Controls.Count;i++) {
+                gbDigitalIO.Controls[i].Text = i.ToString();
+                DigitalControl digitalControl = new DigitalControl(evth, gbDigitalIO.Controls[i], i, false);
+                digitalControl.onChange += DigitalControl_onChange;    
+            }
+        }
+
+        private void DigitalControl_onChange(object sender, DigitalIOChangedArgs args) {
+            if (args.Value) args.Ctl.BackColor = Color.Red; else args.Ctl.BackColor = Color.Black;
         }
 
         private void CbDebugLevel_SelectedIndexChanged(object sender, EventArgs e) {
@@ -75,21 +84,8 @@ namespace LabJackU3 {
                 setLabel(args.Message);
         }
 
-        private void evth_onDataReady(object sender, DataReadyEventArgs e) {
-            Control ctl;
-            uint channel = (uint)(int)e.Data[0];
-            bool value = (bool)e.Data[1];
-            if (btnStatus[channel] != value) {
-                evth.LogMessage(this, new LogEventArgs(LogLevel.DEBUG, "Channel " + channel.ToString() + " changed. Value: " + value));
-                btnStatus[channel] = value;
-                if (channel == 0) ctl = btnChan0; else ctl = btnChan1;
-                if (value) ctl.BackColor = Color.Black; else ctl.BackColor = Color.Red;
-            }
-
-        }
-
         private void button1_Click(object sender, EventArgs e) {
-            evth.LJU3Request(LJU3Commands.PUT_ANALOG_ENABLE_PORT, new object[] { 0, 0, 16 });
+            evth.LJU3Request(LJU3Commands.PUT_ANALOG_ENABLE_PORT, new object[] { 0, 1, 16 });
         }
 
         private void button2_Click(object sender, EventArgs e) {
